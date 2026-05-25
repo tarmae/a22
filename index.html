@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+  />
+
+  <meta
+    name="theme-color"
+    content="#000000"
+  />
+
+  <title>Heart Decryption Interface</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700;800&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --black: #000000;
+      --slate: #030712;
+      --panel: rgba(3, 7, 18, 0.82);
+
+      --pink: #ff007f;
+      --pink-soft: #ff4dac;
+      --pink-hot: #ff1493;
+
+      --mint: #10b981;
+      --mint-soft: #6ee7b7;
+
+      --white: #f3f4f6;
+      --muted: rgba(243, 244, 246, 0.62);
+      --faint: rgba(243, 244, 246, 0.32);
+
+      --red: #fb7185;
+      --yellow: #facc15;
+
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+      --ease-heart: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html {
+      width: 100%;
+      height: 100%;
+      background: var(--black);
+      color: var(--white);
+      font-family:
+        "JetBrains Mono",
+        "Share Tech Mono",
+        ui-monospace,
+        SFMono-Regular,
+        Menlo,
+        Monaco,
+        Consolas,
+        monospace;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: geometricPrecision;
+    }
+
+    body {
+      width: 100%;
+      height: 100%;
+      min-height: 100dvh;
+      overflow: hidden;
+      background:
+        radial-gradient(
+          circle at 50% 35%,
+          rgba(255, 0, 127, 0.13) 0%,
+          rgba(255, 0, 127, 0.045) 27%,
+          transparent 60%
+        ),
+        radial-gradient(
+          circle at 18% 20%,
+          rgba(16, 185, 129, 0.10) 0%,
+          transparent 40%
+        ),
+        radial-gradient(
+          circle at 82% 78%,
+          rgba(255, 0, 127, 0.08) 0%,
+          transparent 44%
+        ),
+        linear-gradient(
+          180deg,
+          #000000 0%,
+          #02040a 46%,
+          #030712 100%
+        );
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      background: transparent;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      min-height: 100dvh;
+      overflow: hidden;
+      padding:
+        calc(18px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        calc(18px + var(--safe-bottom))
+        calc(16px + var(--safe-left));
+    }
+
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          rgba(255, 255, 255, 0.035) 50%,
+          rgba(0, 0, 0, 0.18) 50%
+        );
+      background-size: 100% 4px;
+      mix-blend-mode: overlay;
+      opacity: 0.38;
+      animation: scanlineMove 9000ms linear infinite;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 49;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          circle at center,
+          transparent 0%,
+          transparent 46%,
+          rgba(0, 0, 0, 0.58) 100%
+        );
+    }
+
+    .grid {
+      position: fixed;
+      inset: 0;
+      z-index: -10;
+      pointer-events: none;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(
+          rgba(16, 185, 129, 0.08) 1px,
+          transparent 1px
+        ),
+        linear-gradient(
+          90deg,
+          rgba(255, 0, 127, 0.08) 1px,
+          transparent 1px
+        );
+      background-size: 42px 42px;
+      mask-image:
+        radial-gradient(
+          circle at 50% 48%,
+          black 0%,
+          black 34%,
+          transparent 80%
+        );
+      animation: gridMove 18000ms linear infinite;
+    }
+
+    .noise {
+      position: fixed;
+      inset: 0;
+      z-index: -8;
+      pointer-events: none;
+      opacity: 0.12;
+      background-image:
+        repeating-radial-gradient(
+          circle at 20% 30%,
+          rgba(255, 255, 255, 0.16) 0 1px,
+          transparent 1px 8px
+        );
+      mix-blend-mode: screen;
+    }
+
+    .orb {
+      position: fixed;
+      z-index: -9;
+      border-radius: 999px;
+      filter: blur(30px);
+      pointer-events: none;
+      opacity: 0.62;
+    }
+
+    .orb-1 {
+      width: 300px;
+      height: 300px;
+      left: -130px;
+      top: 14%;
+      background: rgba(255, 0, 127, 0.22);
+      animation: orbOne 12000ms var(--ease-soft) infinite;
+    }
+
+    .orb-2 {
+      width: 260px;
+      height: 260px;
+      right: -120px;
+      bottom: 12%;
+      background: rgba(16, 185, 129, 0.16);
+      animation: orbTwo 14000ms var(--ease-soft) infinite;
+    }
+
+    .matrix-rain {
+      position: fixed;
+      inset: 0;
+      z-index: -7;
+      pointer-events: none;
+      overflow: hidden;
+      opacity: 0.34;
+    }
+
+    .matrix-column {
+      position: absolute;
+      top: -26%;
+      width: 1ch;
+      color: rgba(16, 185, 129, 0.46);
+      font-size: 12px;
+      line-height: 1.25;
+      white-space: pre;
+      text-shadow:
+        0 0 8px rgba(16, 185, 129, 0.36),
+        0 0 16px rgba(16, 185, 129, 0.18);
+      animation:
+        matrixFall
+        var(--matrix-speed)
+        linear
+        var(--matrix-delay)
+        infinite;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding:
+        calc(18px + var(--safe-top))
+        calc(16px + var(--safe-right))
+        calc(18px + var(--safe-bottom))
+        calc(16px + var(--safe-left));
+      transition:
+        opacity 680ms var(--ease-out),
+        transform 680ms var(--ease-out),
+        filter 680ms var(--ease-out),
+        visibility 680ms linear;
+    }
+
+    .screen.active {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+      transform: scale(1);
+      filter: blur(0);
+    }
+
+    .screen.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transform: scale(0.985);
+      filter: blur(8px);
+    }
+
+    .terminal-card {
+      position: relative;
+      width: min(100%, 780px);
+      min-height: min(76dvh, 620px);
+      overflow: hidden;
+      border-radius: clamp(18px, 4vw, 28px);
+      padding:
+        clamp(18px, 4vw, 34px)
+        clamp(16px, 4vw, 34px);
+      background:
+        linear-gradient(
+          145deg,
+          rgba(3, 7, 18, 0.94),
+          rgba(0, 0, 0, 0.78)
+        );
+      border: 1px solid rgba(255, 0, 127, 0.25);
+      box-shadow:
+        0 0 0 1px rgba(16, 185, 129, 0.08),
+        0 32px 100px rgba(0, 0, 0, 0.72),
+        0 0 70px rgba(255, 0, 127, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .terminal-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 0, 127, 0.12),
+          transparent
+        );
+      transform: translateX(-120%);
+      animation: terminalSweep 4200ms var(--ease-soft) 900ms infinite;
+    }
+
+    .terminal-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border-radius: inherit;
+      box-shadow:
+        inset 0 0 36px rgba(16, 185, 129, 0.06),
+        inset 0 0 46px rgba(255, 0, 127, 0.08);
+    }
+
+    .terminal-header {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-bottom: 16px;
+      margin-bottom: 18px;
+      border-bottom: 1px solid rgba(243, 244, 246, 0.12);
+    }
+
+    .dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    .dot.red {
+      color: var(--red);
+      background: var(--red);
+    }
+
+    .dot.yellow {
+      color: var(--yellow);
+      background: var(--yellow);
+    }
+
+    .dot.green {
+      color: var(--mint);
+      background: var(--mint);
+    }
+
+    .titlebar {
+      color: var(--muted);
+      font-size: clamp(10px, 2vw, 12px);
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .secure-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 26px;
+      padding: 0 10px;
+      border-radius: 999px;
+      color: var(--mint-soft);
+      background: rgba(16, 185, 129, 0.08);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .terminal-body {
+      position: relative;
+      z-index: 2;
+      min-height: 360px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .boot-lines {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 34px;
+    }
+
+    .terminal-line {
+      position: relative;
+      display: block;
+      width: fit-content;
+      max-width: 100%;
+      color: var(--white);
+      font-size: clamp(13px, 3.4vw, 18px);
+      line-height: 1.55;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-shadow: 0 0 12px rgba(243, 244, 246, 0.12);
+    }
+
+    .terminal-line .prefix {
+      color: var(--mint);
+      text-shadow: 0 0 10px rgba(16, 185, 129, 0.44);
+    }
+
+    .terminal-line .pink {
+      color: var(--pink-soft);
+      text-shadow: 0 0 12px rgba(255, 0, 127, 0.44);
+    }
+
+    .terminal-line.line-1 {
+      width: 0;
+      animation: typeLineOne 1550ms steps(42) 300ms forwards;
+    }
+
+    .terminal-line.line-2 {
+      width: 0;
+      animation: typeLineTwo 680ms steps(14) 2050ms forwards;
+    }
+
+    .terminal-line.line-3 {
+      width: 0;
+      animation: typeLineThree 1500ms steps(42) 2950ms forwards;
+    }
+
+    .terminal-line::after {
+      content: "";
+      position: absolute;
+      top: 8%;
+      right: -10px;
+      width: 8px;
+      height: 84%;
+      background: var(--mint);
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.85);
+      opacity: 0;
+    }
+
+    .terminal-line.line-1::after {
+      animation: cursorBlink 700ms steps(1) 300ms 3;
+    }
+
+    .terminal-line.line-2::after {
+      animation: cursorBlink 700ms steps(1) 2050ms 2;
+    }
+
+    .terminal-line.line-3::after {
+      animation: cursorBlink 700ms steps(1) 2950ms infinite;
+    }
+
+    .decrypt-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 18px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: revealButton 900ms var(--ease-out) 4550ms forwards;
+    }
+
+    .hint {
+      color: var(--faint);
+      font-size: clamp(11px, 2.5vw, 13px);
+      line-height: 1.6;
+      font-weight: 600;
+    }
+
+    .decrypt-button {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 11px;
+      min-height: 54px;
+      padding: 0 22px;
+      overflow: hidden;
+      border-radius: 16px;
+      color: var(--white);
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255, 0, 127, 0.16),
+          rgba(255, 0, 127, 0.05)
+        );
+      border: 1px solid rgba(255, 0, 127, 0.58);
+      box-shadow:
+        0 0 0 1px rgba(255, 0, 127, 0.09),
+        0 0 24px rgba(255, 0, 127, 0.28),
+        0 0 64px rgba(255, 0, 127, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      font-size: clamp(13px, 3vw, 15px);
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      transition:
+        transform 220ms var(--ease-out),
+        border-color 220ms var(--ease-out),
+        background 220ms var(--ease-out),
+        box-shadow 220ms var(--ease-out);
+      animation: buttonPulse 1900ms ease-in-out infinite;
+    }
+
+    .decrypt-button::before {
+      content: "";
+      position: absolute;
+      inset: -1px;
+      background:
+        linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.22),
+          transparent
+        );
+      transform: translateX(-120%);
+      animation: buttonShine 2600ms var(--ease-soft) infinite;
+    }
+
+    .decrypt-button:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 77, 172, 0.92);
+      background:
+        linear-gradient(
+          135deg,
+          rgba(255, 0, 127, 0.24),
+          rgba(16, 185, 129, 0.055)
+        );
+      box-shadow:
+        0 0 0 1px rgba(255, 0, 127, 0.18),
+        0 0 34px rgba(255, 0, 127, 0.42),
+        0 0 84px rgba(255, 0, 127, 0.18),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    }
+
+    .decrypt-button:active {
+      transform: translateY(0) scale(0.985);
+    }
+
+    .button-icon,
+    .button-text {
+      position: relative;
+      z-index: 2;
+    }
+
+    .button-icon {
+      font-size: 18px;
+      filter: drop-shadow(0 0 8px rgba(255, 0, 127, 0.8));
+    }
+
+    .heart-stage {
+      position: relative;
+      width: min(96vw, 1040px);
+      height: min(84dvh, 780px);
+      min-height: 530px;
+      overflow: hidden;
+      border-radius: 28px;
+      background:
+        radial-gradient(
+          circle at 50% 48%,
+          rgba(255, 0, 127, 0.15),
+          rgba(255, 0, 127, 0.035) 32%,
+          transparent 64%
+        ),
+        linear-gradient(
+          180deg,
+          rgba(3, 7, 18, 0.72),
+          rgba(0, 0, 0, 0.34)
+        );
+      border: 1px solid rgba(255, 0, 127, 0.16);
+      box-shadow:
+        0 34px 100px rgba(0, 0, 0, 0.48),
+        inset 0 0 44px rgba(255, 0, 127, 0.05);
+      transform-origin: 50% 54%;
+    }
+
+    .heart-stage.beating {
+      animation: heartBeat 1650ms var(--ease-heart) infinite;
+    }
+
+    .heart-stage::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      height: 38%;
+      opacity: 0.68;
+      pointer-events: none;
+      background:
+        linear-gradient(
+          180deg,
+          transparent 0%,
+          rgba(16, 185, 129, 0.08) 50%,
+          transparent 100%
+        );
+      transform: translateY(-110%);
+      animation: scanner 2900ms cubic-bezier(0.45, 0, 0.55, 1) infinite;
+    }
+
+    .heart-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(
+          circle at 50% 50%,
+          transparent 0%,
+          transparent 44%,
+          rgba(0, 0, 0, 0.56) 100%
+        );
+    }
+
+    .hud {
+      position: absolute;
+      left: clamp(12px, 3vw, 22px);
+      right: clamp(12px, 3vw, 22px);
+      top: clamp(12px, 3vw, 22px);
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .hud-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 30px;
+      padding: 0 11px;
+      border-radius: 999px;
+      color: var(--mint-soft);
+      background: rgba(16, 185, 129, 0.075);
+      border: 1px solid rgba(16, 185, 129, 0.22);
+      font-size: clamp(10px, 2vw, 12px);
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hud-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--mint);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.9);
+      animation: statusPulse 900ms ease-in-out infinite;
+    }
+
+    .progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: clamp(10px, 2vw, 12px);
+      font-weight: 900;
+      letter-spacing: 0.05em;
+    }
+
+    .progress-track {
+      position: relative;
+      width: clamp(84px, 16vw, 170px);
+      height: 7px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(243, 244, 246, 0.11);
+      border: 1px solid rgba(243, 244, 246, 0.10);
+    }
+
+    .progress-fill {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      border-radius: inherit;
+      background:
+        linear-gradient(
+          90deg,
+          var(--mint),
+          var(--pink)
+        );
+      box-shadow: 0 0 12px rgba(255, 0, 127, 0.4);
+      transition: width 120ms linear;
+    }
+
+    .assembly-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      overflow: hidden;
+      transform-origin: 50% 54%;
+    }
+
+    .love-token {
+      position: absolute;
+      left: 0;
+      top: 0;
+      color: var(--pink);
+      font-family:
+        "JetBrains Mono",
+        "Share Tech Mono",
+        monospace;
+      font-size: var(--token-size);
+      font-weight: 900;
+      line-height: 1;
+      white-space: nowrap;
+      user-select: none;
+      pointer-events: none;
+      will-change: transform, opacity, filter;
+      opacity: 0;
+      text-shadow:
+        0 0 5px rgba(255, 0, 127, 0.9),
+        0 0 13px rgba(255, 0, 127, 0.52),
+        0 0 28px rgba(255, 0, 127, 0.25);
+      transform:
+        translate3d(var(--start-x), var(--start-y), 0)
+        rotate(var(--start-rotation))
+        scale(var(--start-scale));
+      animation:
+        tokenAppear 420ms var(--ease-out) var(--delay) forwards,
+        tokenMove var(--duration) var(--ease-out) calc(var(--delay) + 120ms) forwards,
+        tokenJitter 1400ms ease-in-out calc(var(--delay) + var(--duration) + 260ms) infinite;
+    }
+
+    .love-token.edge {
+      color: var(--pink-soft);
+      text-shadow:
+        0 0 7px rgba(255, 77, 172, 1),
+        0 0 20px rgba(255, 0, 127, 0.76),
+        0 0 42px rgba(255, 0, 127, 0.42);
+    }
+
+    .love-token.core {
+      color: rgba(255, 77, 172, 0.86);
+      text-shadow:
+        0 0 5px rgba(255, 0, 127, 0.64),
+        0 0 14px rgba(255, 0, 127, 0.34);
+    }
+
+    .love-token.spark {
+      color: #ffffff;
+      text-shadow:
+        0 0 7px rgba(255, 255, 255, 0.85),
+        0 0 18px rgba(255, 0, 127, 0.72),
+        0 0 34px rgba(16, 185, 129, 0.25);
+    }
+
+    .complete-message {
+      position: absolute;
+      left: 50%;
+      bottom: clamp(18px, 5vw, 34px);
+      z-index: 9;
+      width: min(92%, 540px);
+      transform: translateX(-50%) translateY(18px);
+      opacity: 0;
+      text-align: center;
+      pointer-events: none;
+      transition:
+        opacity 700ms var(--ease-out),
+        transform 700ms var(--ease-out);
+    }
+
+    .complete-message.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .complete-title {
+      margin-bottom: 10px;
+      color: var(--white);
+      font-size: clamp(20px, 6vw, 34px);
+      line-height: 1.05;
+      font-weight: 900;
+      letter-spacing: -0.06em;
+      text-shadow: 0 0 18px rgba(255, 0, 127, 0.35);
+    }
+
+    .complete-subtitle {
+      color: var(--muted);
+      font-size: clamp(11px, 3vw, 14px);
+      line-height: 1.65;
+      font-weight: 700;
+    }
+
+    .restart {
+      position: absolute;
+      right: clamp(12px, 3vw, 22px);
+      bottom: clamp(12px, 3vw, 22px);
+      z-index: 12;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 0, 127, 0.38);
+      color: rgba(243, 244, 246, 0.82);
+      background: rgba(3, 7, 18, 0.72);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.12);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(8px);
+      pointer-events: none;
+      transition:
+        opacity 500ms var(--ease-out),
+        transform 500ms var(--ease-out),
+        border-color 180ms ease,
+        color 180ms ease;
+    }
+
+    .restart.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    .restart:hover {
+      color: #ffffff;
+      border-color: rgba(255, 77, 172, 0.84);
+    }
+
+    @keyframes typeLineOne {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 42ch;
+      }
+    }
+
+    @keyframes typeLineTwo {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 14ch;
+      }
+    }
+
+    @keyframes typeLineThree {
+      from {
+        width: 0;
+      }
+
+      to {
+        width: 42ch;
+      }
+    }
+
+    @keyframes cursorBlink {
+      0%,
+      49% {
+        opacity: 1;
+      }
+
+      50%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    @keyframes revealButton {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+        filter: blur(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @keyframes buttonPulse {
+      0%,
+      100% {
+        box-shadow:
+          0 0 0 1px rgba(255, 0, 127, 0.09),
+          0 0 24px rgba(255, 0, 127, 0.26),
+          0 0 64px rgba(255, 0, 127, 0.10),
+          inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      }
+
+      50% {
+        box-shadow:
+          0 0 0 1px rgba(255, 0, 127, 0.16),
+          0 0 34px rgba(255, 0, 127, 0.46),
+          0 0 86px rgba(255, 0, 127, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    @keyframes buttonShine {
+      0% {
+        transform: translateX(-120%);
+      }
+
+      42%,
+      100% {
+        transform: translateX(120%);
+      }
+    }
+
+    @keyframes terminalSweep {
+      0% {
+        transform: translateX(-120%);
+        opacity: 0;
+      }
+
+      20% {
+        opacity: 1;
+      }
+
+      52% {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+
+      100% {
+        transform: translateX(120%);
+        opacity: 0;
+      }
+    }
+
+    @keyframes scanlineMove {
+      from {
+        background-position: 0 0;
+      }
+
+      to {
+        background-position: 0 120px;
+      }
+    }
+
+    @keyframes gridMove {
+      from {
+        background-position: 0 0;
+      }
+
+      to {
+        background-position: 42px 42px;
+      }
+    }
+
+    @keyframes matrixFall {
+      from {
+        transform: translateY(-20%);
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      80% {
+        opacity: 0.8;
+      }
+
+      to {
+        transform: translateY(140%);
+        opacity: 0;
+      }
+    }
+
+    @keyframes orbOne {
+      0%,
+      100% {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      50% {
+        transform: translate3d(44px, 30px, 0) scale(1.12);
+      }
+    }
+
+    @keyframes orbTwo {
+      0%,
+      100% {
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+
+      50% {
+        transform: translate3d(-38px, -28px, 0) scale(1.08);
+      }
+    }
+
+    @keyframes scanner {
+      0% {
+        transform: translateY(-115%);
+        opacity: 0;
+      }
+
+      15% {
+        opacity: 0.72;
+      }
+
+      50% {
+        opacity: 0.42;
+      }
+
+      85% {
+        opacity: 0.7;
+      }
+
+      100% {
+        transform: translateY(275%);
+        opacity: 0;
+      }
+    }
+
+    @keyframes tokenAppear {
+      from {
+        opacity: 0;
+        filter: blur(10px);
+      }
+
+      to {
+        opacity: 1;
+        filter: blur(0);
+      }
+    }
+
+    @keyframes tokenMove {
+      0% {
+        transform:
+          translate3d(var(--start-x), var(--start-y), 0)
+          rotate(var(--start-rotation))
+          scale(var(--start-scale));
+        opacity: 0.15;
+      }
+
+      38% {
+        opacity: 1;
+      }
+
+      100% {
+        transform:
+          translate3d(var(--target-x), var(--target-y), 0)
+          rotate(var(--target-rotation))
+          scale(var(--target-scale));
+        opacity: var(--final-opacity);
+      }
+    }
+
+    @keyframes tokenJitter {
+      0%,
+      100% {
+        transform:
+          translate3d(
+            calc(var(--target-x) + var(--jitter-x-a)),
+            calc(var(--target-y) + var(--jitter-y-a)),
+            0
+          )
+          rotate(var(--target-rotation))
+          scale(var(--target-scale));
+        opacity: var(--final-opacity);
+      }
+
+      50% {
+        transform:
+          translate3d(
+            calc(var(--target-x) + var(--jitter-x-b)),
+            calc(var(--target-y) + var(--jitter-y-b)),
+            0
+          )
+          rotate(calc(var(--target-rotation) + var(--jitter-r)))
+          scale(calc(var(--target-scale) * 1.045));
+        opacity: calc(var(--final-opacity) + 0.10);
+      }
+    }
+
+    @keyframes heartBeat {
+      0% {
+        transform: scale(1);
+      }
+
+      12% {
+        transform: scale(1.018);
+      }
+
+      22% {
+        transform: scale(0.996);
+      }
+
+      36% {
+        transform: scale(1.012);
+      }
+
+      52% {
+        transform: scale(1);
+      }
+
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    @keyframes statusPulse {
+      0%,
+      100% {
+        opacity: 0.52;
+        transform: scale(0.88);
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.1);
+      }
+    }
+
+    @keyframes mobileLineFade {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+        filter: blur(5px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .terminal-card {
+        min-height: 72dvh;
+        border-radius: 22px;
+      }
+
+      .secure-pill {
+        display: none;
+      }
+
+      .terminal-line {
+        white-space: normal;
+      }
+
+      .terminal-line.line-1,
+      .terminal-line.line-2,
+      .terminal-line.line-3 {
+        width: auto;
+        opacity: 0;
+        animation: mobileLineFade 700ms var(--ease-out) forwards;
+      }
+
+      .terminal-line.line-1 {
+        animation-delay: 400ms;
+      }
+
+      .terminal-line.line-2 {
+        animation-delay: 1300ms;
+      }
+
+      .terminal-line.line-3 {
+        animation-delay: 2200ms;
+      }
+
+      .terminal-line::after {
+        display: none;
+      }
+
+      .decrypt-zone {
+        animation-delay: 3150ms;
+      }
+
+      .heart-stage {
+        width: 100%;
+        height: 84dvh;
+        min-height: 540px;
+        border-radius: 22px;
+      }
+
+      .progress {
+        display: none;
+      }
+
+      .restart {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%) translateY(8px);
+      }
+
+      .restart.show {
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-delay: 0ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main id="app" class="app">
+    <div class="grid" aria-hidden="true"></div>
+    <div id="matrixRain" class="matrix-rain" aria-hidden="true"></div>
+    <div class="orb orb-1" aria-hidden="true"></div>
+    <div class="orb orb-2" aria-hidden="true"></div>
+    <div class="noise" aria-hidden="true"></div>
+    <div class="vignette" aria-hidden="true"></div>
+    <div class="scanlines" aria-hidden="true"></div>
+
+    <section id="screenOne" class="screen active">
+      <div
+        class="
+          terminal-card
+          w-full
+          max-w-[780px]
+          rounded-[28px]
+          border
+          border-pink-500/20
+        "
+      >
+        <header class="terminal-header">
+          <div class="dots" aria-hidden="true">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+
+          <div class="titlebar">
+            heart-decryption://private-package
+          </div>
+
+          <div class="secure-pill">
+            secure
+          </div>
+        </header>
+
+        <div class="terminal-body">
+          <div class="boot-lines">
+            <p class="terminal-line line-1">
+              <span class="prefix">[system]</span>
+              Initializing <span class="pink">heart.PROTOCOL_v2.0</span>...
+            </p>
+
+            <p class="terminal-line line-2">
+              <span class="prefix">[status]</span>
+              READY
+            </p>
+
+            <p class="terminal-line line-3">
+              <span class="prefix">&gt;</span>
+              One encrypted package found for you.
+            </p>
+          </div>
+
+          <div class="decrypt-zone">
+            <p class="hint">
+              Authorization required. Emotional firewall looks suspiciously weak.
+            </p>
+
+            <button id="decryptButton" class="decrypt-button" type="button">
+              <span class="button-icon">🔓</span>
+              <span class="button-text">[ DECRYPT MESSAGE ]</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="screenTwo" class="screen hidden">
+      <div id="heartStage" class="heart-stage">
+        <div class="hud">
+          <div class="hud-label">
+            <span class="hud-dot"></span>
+            <span id="phaseLabel">decrypting</span>
+          </div>
+
+          <div class="progress">
+            <span id="progressText">0%</span>
+
+            <div class="progress-track">
+              <div id="progressFill" class="progress-fill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="assemblyLayer" class="assembly-layer"></div>
+
+        <div id="completeMessage" class="complete-message">
+          <h1 class="complete-title">
+            MESSAGE DECRYPTED
+          </h1>
+
+          <p class="complete-subtitle">
+            Payload result: 100% affection. The system is not okay.
+          </p>
+        </div>
+
+        <button id="restartButton" class="restart" type="button">
+          restart
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    /*
+      ============================================================
+      HEART DECRYPTION ENGINE
+      ============================================================
+
+      This file is intentionally verbose, explicit, and readable.
+
+      Main jobs:
+      1. Generate the cyberpunk matrix background.
+      2. Handle screen state transitions.
+      3. Spawn 350 to 450 "I love you" nodes.
+      4. Plot final node positions with the required parametric heart:
+         x = 16 * sin^3(t)
+         y = -(13cos(t) - 5cos(2t) - 2cos(3t) - cos(4t))
+      5. Animate every text node from an exploded random state
+         into a precise, dense, cinematic heart formation.
+      6. Start a subtle beat and jitter after assembly.
+      7. Provide clean hooks for audio without forcing sound.
+    */
+
+    const app = document.getElementById("app");
+
+    const screenOne = document.getElementById("screenOne");
+    const screenTwo = document.getElementById("screenTwo");
+
+    const decryptButton = document.getElementById("decryptButton");
+    const restartButton = document.getElementById("restartButton");
+
+    const matrixRain = document.getElementById("matrixRain");
+    const heartStage = document.getElementById("heartStage");
+    const assemblyLayer = document.getElementById("assemblyLayer");
+
+    const progressText = document.getElementById("progressText");
+    const progressFill = document.getElementById("progressFill");
+    const phaseLabel = document.getElementById("phaseLabel");
+    const completeMessage = document.getElementById("completeMessage");
+
+    const audioHooks = {
+      boot() {
+        /*
+          Optional audio hook.
+
+          Example:
+          const sound = new Audio("boot.mp3");
+          sound.volume = 0.18;
+          sound.play();
+        */
+      },
+
+      decrypt() {
+        /*
+          Optional audio hook.
+
+          Example:
+          const sound = new Audio("unlock.mp3");
+          sound.volume = 0.22;
+          sound.play();
+        */
+      },
+
+      complete() {
+        /*
+          Optional audio hook.
+
+          Example:
+          const sound = new Audio("complete.mp3");
+          sound.volume = 0.20;
+          sound.play();
+        */
+      }
+    };
+
+    const state = {
+      running: false,
+      completed: false,
+      tokenCount: 0,
+      progressTimer: null,
+      resizeTimer: null
+    };
+
+    const matrixGlyphs = [
+      "0",
+      "1",
+      "♥",
+      "+",
+      "*",
+      "#",
+      "x",
+      "i",
+      "o",
+      "Y",
+      "L",
+      "V",
+      "E",
+      "/",
+      "\\",
+      "<",
+      ">"
+    ];
+
+    function randomBetween(min, max) {
+      return Math.random() * (max - min) + min;
+    }
+
+    function randomInteger(min, max) {
+      return Math.floor(randomBetween(min, max + 1));
+    }
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
+    }
+
+    function pick(array) {
+      return array[Math.floor(Math.random() * array.length)];
+    }
+
+    function setScreen(number) {
+      if (number === 1) {
+        screenOne.classList.add("active");
+        screenOne.classList.remove("hidden");
+
+        screenTwo.classList.add("hidden");
+        screenTwo.classList.remove("active");
+      }
+
+      if (number === 2) {
+        screenOne.classList.add("hidden");
+        screenOne.classList.remove("active");
+
+        screenTwo.classList.add("active");
+        screenTwo.classList.remove("hidden");
+      }
+    }
+
+    function buildMatrixRain() {
+      matrixRain.innerHTML = "";
+
+      const viewportWidth = window.innerWidth;
+      const columnWidth = viewportWidth < 640 ? 22 : 28;
+      const columnCount = Math.ceil(viewportWidth / columnWidth);
+
+      const fragment = document.createDocumentFragment();
+
+      for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+        const column = document.createElement("span");
+
+        column.className = "matrix-column";
+        column.style.left = `${columnIndex * columnWidth}px`;
+        column.style.setProperty("--matrix-speed", `${randomBetween(6000, 14500)}ms`);
+        column.style.setProperty("--matrix-delay", `${randomBetween(-9000, 2000)}ms`);
+
+        let text = "";
+        const glyphCount = randomInteger(24, 52);
+
+        for (let glyphIndex = 0; glyphIndex < glyphCount; glyphIndex += 1) {
+          text += pick(matrixGlyphs);
+
+          if (glyphIndex !== glyphCount - 1) {
+            text += "\n";
+          }
+        }
+
+        column.textContent = text;
+        fragment.appendChild(column);
+      }
+
+      matrixRain.appendChild(fragment);
+    }
+
+    function getStageSize() {
+      const rect = heartStage.getBoundingClientRect();
+
+      return {
+        width: rect.width,
+        height: rect.height,
+        centerX: rect.width / 2,
+        centerY: rect.height / 2
+      };
+    }
+
+    function heartCurvePoint(t) {
+      const sinT = Math.sin(t);
+      const cosT = Math.cos(t);
+
+      const x = 16 * Math.pow(sinT, 3);
+
+      const y = -(
+        13 * cosT -
+        5 * Math.cos(2 * t) -
+        2 * Math.cos(3 * t) -
+        Math.cos(4 * t)
+      );
+
+      return {
+        x,
+        y
+      };
+    }
+
+    function createParametricHeartPoints(targetCount) {
+      const size = getStageSize();
+
+      const isMobile = size.width < 640;
+
+      const scale = isMobile
+        ? Math.min(size.width / 40, size.height / 36)
+        : Math.min(size.width / 43, size.height / 38);
+
+      const centerX = size.centerX;
+      const centerY = size.centerY + (isMobile ? 28 : 34);
+
+      const edgeCount = Math.floor(targetCount * 0.52);
+      const fillCount = targetCount - edgeCount;
+
+      const points = [];
+
+      for (let index = 0; index < edgeCount; index += 1) {
+        const t = (Math.PI * 2 * index) / edgeCount;
+
+        const heart = heartCurvePoint(t);
+
+        const x = centerX + heart.x * scale;
+        const y = centerY + heart.y * scale;
+
+        points.push({
+          x,
+          y,
+          type: "edge",
+          angle: t,
+          opacity: randomBetween(0.86, 1),
+          scale: randomBetween(0.88, 1.14),
+          rotation: randomBetween(-5, 5)
+        });
+      }
+
+      for (let index = 0; index < fillCount; index += 1) {
+        const t = (Math.PI * 2 * index) / fillCount;
+
+        const heart = heartCurvePoint(t);
+
+        const radialLayer = Math.sqrt(index / fillCount);
+        const innerFactor = randomBetween(0.18, 0.94) * radialLayer;
+
+        const x = centerX + heart.x * scale * innerFactor;
+        const y = centerY + heart.y * scale * innerFactor;
+
+        points.push({
+          x,
+          y,
+          type: "core",
+          angle: t,
+          opacity: randomBetween(0.36, 0.76),
+          scale: randomBetween(0.58, 0.92),
+          rotation: randomBetween(-7, 7)
+        });
+      }
+
+      points.sort((a, b) => {
+        const da = Math.hypot(a.x - centerX, a.y - centerY);
+        const db = Math.hypot(b.x - centerX, b.y - centerY);
+        return da - db;
+      });
+
+      return points;
+    }
+
+    function getRandomExplodedPosition() {
+      const size = getStageSize();
+
+      const spreadX = size.width * 0.98;
+      const spreadY = size.height * 0.92;
+
+      const x = size.centerX + randomBetween(-spreadX / 2, spreadX / 2);
+      const y = size.centerY + randomBetween(-spreadY / 2, spreadY / 2);
+
+      return {
+        x,
+        y
+      };
+    }
+
+    function createLoveToken(point, index) {
+      const size = getStageSize();
+
+      const token = document.createElement("span");
+
+      const start = getRandomExplodedPosition();
+
+      const tokenSize = size.width < 640
+        ? randomBetween(7.2, 9.4)
+        : randomBetween(8.7, 11.6);
+
+      const startRotation = randomBetween(-90, 90);
+      const startScale = randomBetween(0.28, 1.34);
+
+      const targetRotation = point.rotation;
+      const targetScale = point.scale;
+
+      const delay = randomBetween(0, 420) + index * randomBetween(1.2, 2.8);
+
+      const duration = randomBetween(3500, 4000);
+
+      const jitterPower = point.type === "edge" ? 2.4 : 1.55;
+
+      token.className = "love-token";
+      token.textContent = "I love you";
+
+      if (point.type === "edge") {
+        token.classList.add("edge");
+      } else {
+        token.classList.add("core");
+      }
+
+      if (index % 53 === 0) {
+        token.classList.add("spark");
+      }
+
+      token.style.setProperty("--token-size", `${tokenSize}px`);
+
+      token.style.setProperty("--start-x", `${start.x}px`);
+      token.style.setProperty("--start-y", `${start.y}px`);
+
+      token.style.setProperty("--target-x", `${point.x}px`);
+      token.style.setProperty("--target-y", `${point.y}px`);
+
+      token.style.setProperty("--start-rotation", `${startRotation}deg`);
+      token.style.setProperty("--target-rotation", `${targetRotation}deg`);
+
+      token.style.setProperty("--start-scale", startScale.toFixed(3));
+      token.style.setProperty("--target-scale", targetScale.toFixed(3));
+
+      token.style.setProperty("--delay", `${delay}ms`);
+      token.style.setProperty("--duration", `${duration}ms`);
+
+      token.style.setProperty("--final-opacity", point.opacity.toFixed(3));
+
+      token.style.setProperty("--jitter-x-a", `${randomBetween(-jitterPower, jitterPower)}px`);
+      token.style.setProperty("--jitter-y-a", `${randomBetween(-jitterPower, jitterPower)}px`);
+      token.style.setProperty("--jitter-x-b", `${randomBetween(-jitterPower, jitterPower)}px`);
+      token.style.setProperty("--jitter-y-b", `${randomBetween(-jitterPower, jitterPower)}px`);
+      token.style.setProperty("--jitter-r", `${randomBetween(-2.1, 2.1)}deg`);
+
+      return token;
+    }
+
+    function resetHeart() {
+      state.running = false;
+      state.completed = false;
+      state.tokenCount = 0;
+
+      assemblyLayer.innerHTML = "";
+
+      heartStage.classList.remove("beating");
+      completeMessage.classList.remove("show");
+      restartButton.classList.remove("show");
+
+      phaseLabel.textContent = "decrypting";
+      progressText.textContent = "0%";
+      progressFill.style.width = "0%";
+
+      if (state.progressTimer) {
+        clearInterval(state.progressTimer);
+        state.progressTimer = null;
+      }
+    }
+
+    function runProgress(duration) {
+      const start = performance.now();
+
+      state.progressTimer = setInterval(() => {
+        const elapsed = performance.now() - start;
+        const progress = clamp(elapsed / duration, 0, 1);
+        const percentage = Math.floor(progress * 100);
+
+        progressText.textContent = `${percentage}%`;
+        progressFill.style.width = `${percentage}%`;
+
+        if (progress >= 1) {
+          clearInterval(state.progressTimer);
+
+          state.progressTimer = null;
+          state.completed = true;
+
+          progressText.textContent = "100%";
+          progressFill.style.width = "100%";
+          phaseLabel.textContent = "decrypted";
+
+          heartStage.classList.add("beating");
+          completeMessage.classList.add("show");
+          restartButton.classList.add("show");
+
+          audioHooks.complete();
+        }
+      }, 40);
+    }
+
+    function startAssembly() {
+      resetHeart();
+
+      state.running = true;
+
+      const preferredCount = window.innerWidth < 520
+        ? 360
+        : 430;
+
+      const tokenCount = clamp(preferredCount, 350, 450);
+
+      state.tokenCount = tokenCount;
+
+      const points = createParametricHeartPoints(tokenCount);
+
+      const fragment = document.createDocumentFragment();
+
+      points.forEach((point, index) => {
+        const token = createLoveToken(point, index);
+        fragment.appendChild(token);
+      });
+
+      assemblyLayer.appendChild(fragment);
+
+      runProgress(4700);
+    }
+
+    function startDecryption() {
+      audioHooks.decrypt();
+
+      setScreen(2);
+
+      window.setTimeout(() => {
+        startAssembly();
+      }, 340);
+    }
+
+    function restartAssembly() {
+      audioHooks.boot();
+      startAssembly();
+    }
+
+    function handleResize() {
+      clearTimeout(state.resizeTimer);
+
+      state.resizeTimer = setTimeout(() => {
+        buildMatrixRain();
+
+        if (screenTwo.classList.contains("active")) {
+          startAssembly();
+        }
+      }, 260);
+    }
+
+    function initialize() {
+      buildMatrixRain();
+
+      audioHooks.boot();
+
+      decryptButton.addEventListener("click", startDecryption);
+
+      restartButton.addEventListener("click", restartAssembly);
+
+      window.addEventListener("resize", handleResize, {
+        passive: true
+      });
+    }
+
+    initialize();
+  </script>
+</body>
+</html>
